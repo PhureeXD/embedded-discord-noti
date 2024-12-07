@@ -9,6 +9,7 @@ import { Client, GatewayIntentBits, TextChannel, EmbedBuilder, Events } from 'di
 import dotenv from 'dotenv';
 import schedule from 'node-schedule';
 import moment from 'moment-timezone';
+import http from 'http';
 
 dotenv.config();
 
@@ -140,6 +141,16 @@ onValue(paymentsRef, (snapshot) => {
   Object.keys(paymentsData).forEach((paymentKey) => {
     schedulePaymentTasks(paymentsData[paymentKey], paymentKey);
   });
+});
+
+const server = http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Discord Bot is running');
+});
+
+const port = process.env.PORT || 3000;
+server.listen(port, () => {
+  console.log(`Server running on port ${port}`);
 });
 
 console.log('Backend service started');
