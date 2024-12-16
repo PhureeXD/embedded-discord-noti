@@ -2,10 +2,10 @@
   "name": "backend",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
@@ -17,5 +17,9 @@
     "firebase": "^11.0.2",
     "moment-timezone": "^0.5.46",
     "node-schedule": "^2.1.1"
+  },
+  "devDependencies": {
+    "@types/node-schedule": "^2.1.7",
+    "typescript": "^5.7.2"
   }
 }
