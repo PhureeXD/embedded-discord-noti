@@ -1,26 +1,67 @@
-name: Discord Notification
+name: Discord Notification and Node.js Check
 
 on:
   push:
     branches:
-      - main  # branch name 
+      - main  # branch name
   pull_request:
     types: [opened, closed, reopened]
 
 jobs:
-  discord-notification:
+  node-check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Discord Webhook Action
-        uses: Ilshidur/action-discord@master
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          DISCORD_USERNAME: GitHub
-          DISCORD_AVATAR: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          args: |
-            [{{ EVENT_PAYLOAD.repository.full_name }}:${{ github.ref_name }}] ${{ github.event.commits[0].message }}
-            ${{ github.event.commits[0].id }} ${{ github.event.commits[0].message }} - ${{ github.event.commits[0].author.name }}
+          node-version: '22.x'
+
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build --if-present
+
+  discord-notification:
+    needs: node-check # Ensure this runs after Node.js check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Discord notification
+        uses: Ilshidur/action-discord@0.3.2
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          DISCORD_EMBEDS: |
+            [
+              {
+                "title": "Build Success",
+                "description": "The Node.js build completed successfully!",
+                "color": 65280,
+                "fields": [
+                  {
+                    "name": "Repository",
+                    "value": "${{ github.repository }}",
+                    "inline": true
+                  },
+                  {
+                    "name": "Branch",
+                    "value": "${{ github.ref_name }}",
+                    "inline": true
+                  }
+                ],
+                "footer": {
+                  "text": "GitHub Actions Notification",
+                  "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+                }
+              }
+            ]
+
+      - name: Actions for Discord
+        uses: Ilshidur/action-discord@0.3.2
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+
