@@ -1,46 +1,26 @@
-name: Node.js CI
+name: Discord Notification
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main  # branch name 
   pull_request:
-    branches: [ "main" ]
+    types: [opened, closed, reopened]
 
 jobs:
-  build:
-
+  discord-notification:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        node-version: [22.x]
-        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
-
     steps:
-    - uses: actions/checkout@v4
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    - run: npm ci
-    - run: npm run build --if-present
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Get commit message
-      id: get_commit_message
-      run: |
-        COMMIT_MESSAGE=$(git log --format=%s -n 1 ${{ github.sha }})
-        echo "::set-output name=message::$COMMIT_MESSAGE"
-
-    - name: Discord notification
-      env:
-        DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-      uses: Ilshidur/action-discord@master
-      with:
-        args: |
-          **New commit to** {{ EVENT_PAYLOAD.repository.full_name }}:
-          **Commit message**: 
-          > *${{ steps.get_commit_message.outputs.message }}*
-          :arrow_forward: Build triggered successfully.
-          :white_check_mark: Node.js Version: ${{ matrix.node-version }}
-          :hash: Commit SHA: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+      - name: Discord Webhook Action
+        uses: Ilshidur/action-discord@master
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_USERNAME: GitHub
+          DISCORD_AVATAR: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+        with:
+          args: |
+            [{{ EVENT_PAYLOAD.repository.full_name }}:${{ github.ref_name }}] ${{ github.event.commits[0].message }}
+            ${{ github.event.commits[0].id }} ${{ github.event.commits[0].message }} - ${{ github.event.commits[0].author.name }}
